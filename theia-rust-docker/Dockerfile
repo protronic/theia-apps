@@ -25,6 +25,7 @@ RUN cp -R /root/theia-cpp-extension/packages $THEIA_RUST_APP_PATH/.
 RUN cp -Rv /root/theia-cpp-extension/dev-packages/* $THEIA_RUST_APP_PATH/packages/.
 RUN . /root/nvm_setup.sh && cd $THEIA_RUST_APP_PATH && yarn --cache-folder $THEIA_RUST_APP_PATH/ycache 
 RUN . /root/nvm_setup.sh && cd $THEIA_RUST_APP_PATH && yarn theia build
+RUN . /root/nvm_setup.sh && cd $THEIA_RUST_APP_PATH && yarn theia download:plugins 
 
 # when creating a container a volume is mapped to /root/rust
 # to allow to make persistent changes
@@ -51,6 +52,8 @@ RUN . /root/rust/cargo/env && umask 0002 && cargo +$rust_channel install racer
 
 EXPOSE 3000
 ENV SHELL /bin/bash
+ENV THEIA_DEFAULT_PLUGINS=local-dir:/root/theia_rust_app/plugins
+
 # script to start theia
 ADD run.sh /root/run.sh
 # script to set environment
