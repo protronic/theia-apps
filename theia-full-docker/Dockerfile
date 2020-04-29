@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND noninteractive
 
 #Common deps
-RUN apt-get update && apt-get -y install curl xz-utils wget gpg build-essential     
+RUN apt-get update && apt-get -y install curl xz-utils wget gpg build-essential
 
 #Install node and yarn
 #From: https://github.com/nodejs/docker-node/blob/6b8d86d6ad59e0d1e7a94cec2e909cad137a028f/8/Dockerfile
@@ -79,14 +79,14 @@ RUN apt-get -y install git sudo
 
 #LSPs
 
-##GO
-# ENV GO_VERSION 1.14
-# ENV GOPATH=/usr/local/go-packages
-# ENV GO_ROOT=/usr/local/go
-# ENV PATH $PATH:/usr/local/go/bin
-# ENV PATH $PATH:${GOPATH}/bin
+#GO
+ENV GO_VERSION 1.14
+ENV GOPATH=/usr/local/go-packages
+ENV GO_ROOT=/usr/local/go
+ENV PATH $PATH:/usr/local/go/bin
+ENV PATH $PATH:${GOPATH}/bin
 
-# RUN curl -sS https://storage.googleapis.com/golang/go$GO_VERSION.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+RUN curl -sS https://storage.googleapis.com/golang/go$GO_VERSION.linux-amd64.tar.gz | tar -C /usr/local -xzf -
 
 # RUN go get -u -v github.com/mdempsky/gocode && \
 #     go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs && \
@@ -170,6 +170,9 @@ RUN apt-get -y install pkg-config openssl libssl-dev gcc-arm-none-eabi binutils-
 RUN cargo install cargo-generate
 RUN cargo install cargo-clone
 RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi thumbv7em-none-eabihf
+
+# Angular
+RUN npm install -g @angular/cli
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia && \
