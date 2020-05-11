@@ -87,7 +87,7 @@ RUN \
 #LSPs
 
 #GO
-ENV GO_VERSION 1.14
+ENV GO_VERSION 1.14.2
 ENV GOPATH=/usr/local/go-packages
 ENV GO_ROOT=/usr/local/go
 ENV PATH $PATH:/usr/local/go/bin
@@ -114,12 +114,14 @@ RUN go get -u -v github.com/mdempsky/gocode && \
     go get -u -v github.com/cweill/gotests/... && \
     go get -u -v github.com/alecthomas/gometalinter && \
     go get -u -v honnef.co/go/tools/... && \
-    go get -u -v github.com/golangci/golangci-lint/cmd/golangci-lint && \
     go get -u -v github.com/mgechev/revive && \
     go get -u -v github.com/sourcegraph/go-langserver && \
     go get -u -v github.com/go-delve/delve/cmd/dlv && \
     go get -u -v github.com/davidrjenni/reftools/cmd/fillstruct && \
     go get -u -v github.com/godoctor/godoctor
+
+ENV GO111MODULE=on
+RUN go get -u -v  github.com/golangci/golangci-lint/cmd/golangci-lint@v1.26.0
 
 #Java
 ENV JAVA_VERSION jdk-14.0.1+7
