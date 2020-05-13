@@ -137,6 +137,7 @@
             "vscode-spring-boot": "https://open-vsx.org/api/Pivotal/vscode-spring-boot/1.17.0/file/Pivotal.vscode-spring-boot-1.17.0.vsix",
             "debugger-for-chrome": "https://open-vsx.org/api/msjsdiag/debugger-for-chrome/4.12.6/file/msjsdiag.debugger-for-chrome-4.12.6.vsix",
             "ng-template": "https://open-vsx.org/api/Angular/ng-template/0.901.3/file/Angular.ng-template-0.901.3.vsix",
-            "vscode-cortex-debug": "https://github.com/Marus/cortex-debug/releases/download/v0.3.6/cortex-debug-0.3.6.vsix"
+            "vscode-cortex-debug": "https://github.com/Marus/cortex-debug/releases/download/v0.3.6/cortex-debug-0.3.6.vsix",
+            "vscode-clangd": "https://open-vsx.org/api/llvm-vs-code-extensions/vscode-clangd/0.0.21/file/llvm-vs-code-extensions.vscode-clangd-0.0.21.vsix"
         }
     }

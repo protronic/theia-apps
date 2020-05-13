@@ -170,7 +170,7 @@ RUN apt-get update && apt-get -y install maven gradle
 # public LLVM PPA, development version of LLVM
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
     echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal main" > /etc/apt/sources.list.d/llvm.list && \
-    apt-get update && apt-get install -y clang-tools-11 clangd-11 clang-tidy-11 && \
+    apt-get update && apt-get install -y clang-tools-11 clangd-11 clang-tidy-11 lldb-11 && \
     ln -s /usr/bin/clangd-11 /usr/bin/clangd && \
     ln -s /usr/bin/clang-tidy-11 /usr/bin/clang-tidy
 
@@ -215,9 +215,31 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y \
     && rustup component add rls rust-src rust-analysis
 
 # Embedded Rust
-RUN npm install --global xpm@latest
-RUN xpm install --global @xpack-dev-tools/arm-none-eabi-gcc@latest
-RUN apt-get -y install pkg-config openssl libssl-dev
+#RUN npm install --global xpm@latest
+#RUN xpm install --global @xpack-dev-tools/arm-none-eabi-gcc@latest
+ENV ARM_TOOLS_VERSION 9.2.1-1.1
+
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+       amd64|x86_64) \
+         ESUM='bbde117b97f229dfe63721c0323c3da6839e83cf302c8f4ff25e0f36ecf7a428'; \
+         BINARY_URL='https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v9.2.1-1.1/xpack-arm-none-eabi-gcc-9.2.1-1.1-linux-x64.tar.gz'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    curl -LfsSo /tmp/arm-none-eabi-gcc.tar.gz ${BINARY_URL}; \
+    echo "${ESUM} */tmp/arm-none-eabi-gcc.tar.gz" | sha256sum -c -; \
+    mkdir -p /opt/arm-none-eabi-gcc; \
+    cd /opt/arm-none-eabi-gcc; \
+    tar -xf /tmp/arm-none-eabi-gcc.tar.gz --strip-components=1; \
+    rm -rf /tmp/arm-none-eabi-gcc.tar.gz;
+
+ENV PATH="/opt/arm-none-eabi-gcc/bin:$PATH"
+RUN apt-get -y install pkg-config openssl libssl-dev gdb
 RUN cargo install cargo-generate
 RUN cargo install cargo-clone
 RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi thumbv7em-none-eabihf
