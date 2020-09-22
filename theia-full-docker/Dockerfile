@@ -259,14 +259,6 @@ RUN \
 ENV DART_SDK /usr/lib/dart
 ENV PATH $DART_SDK/bin:/theia/.pub-cache/bin:$PATH
 
-# Embedded Rust
-RUN apt-get -y install pkg-config openssl libssl-dev gcc-arm-none-eabi binutils-arm-none-eabi gdb-multiarch
-RUN cargo install cargo-generate
-RUN cargo install cargo-clone
-RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi thumbv7em-none-eabihf
-
-# Angular
-RUN npm install -g @angular/cli
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia && \
