@@ -56,13 +56,10 @@ _Other Variants_:
 | [theiaide/theia-dart](https://hub.docker.com/r/theiaide/theia-dart) | Theia-based Dart example application | |
 | [theiaide/theia-full](https://hub.docker.com/r/theiaide/theia-full) | Theia-based example application with support for multiple languages | |
 | [theiaide/theia-go](https://hub.docker.com/r/theiaide/theia-go) | Theia-based Go example application | [docs](./theia-go-docker/README.md) |
-| [theiaide/theia-java](https://hub.docker.com/r/theiaide/theia-java) | Theia-based Java example application | |
 | [theiaide/theia-python](https://hub.docker.com/r/theiaide/theia-python) | Theia-based Python example application | [docs](./theia-python-docker/README.md) |
 | [theiaide/theia-php](https://hub.docker.com/r/theiaide/theia-php) | Theia-based PHP example application | [docs](./theia-php-docker/README.md) |
-| [theiaide/theia-ruby](https://hub.docker.com/r/theiaide/theia-ruby) | Theia-based Ruby example application | |
 | [theiaide/theia-rust](https://hub.docker.com/r/theiaide/theia-rust) | Theia-based Rust example application | [docs](./theia-rust-docker/README.md) |
 | [theiaide/theia-swift](https://hub.docker.com/r/theiaide/theia-swift) | Theia-based Swift example application | |
-| [theiaide/yangster](https://hub.docker.com/r/theiaide/yangster) | Theia-based YANG example application | |
 
 ---
 
@@ -127,7 +124,7 @@ Many applications in the repository now include support for running VS Code exte
 
 - #### Build Options:
     - `--init` injects an instance of [tini](https://github.com/krallin/tini) in the container, that will wait-for and reap terminated processes, to avoid leaking PIDs.
-    - `--security-opt seccomp=unconfined` enables running without [the default seccomp profile](https://docs.docker.com/engine/security/seccomp/) for debugging.
+    - `--security-opt seccomp=unconfined` enables running without [the default seccomp profile](https://docs.docker.com/engine/security/seccomp/) for debugging. This option is also required if the swift REPL is needed.
 
 ## Contributing
 

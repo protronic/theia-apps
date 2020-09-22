@@ -3,7 +3,8 @@ FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND noninteractive
 
 ARG GITHUB_TOKEN
-ARG NODE_VERSION=10.15.3
+ARG NODE_VERSION=12.18.3
+ARG LLVM=12
 ENV NODE_VERSION $NODE_VERSION
 ENV YARN_VERSION 1.13.0
 
@@ -97,23 +98,30 @@ RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
     echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" > /etc/apt/sources.list.d/llvm.list && \
     apt-get update && \
     apt-get install -y \
-                       clang-tools-11 \
-                       clangd-11 \
-                       clang-tidy-11 \
+                       clang-tools-$LLVM \
+                       clangd-$LLVM \
+                       clang-tidy-$LLVM \
+                       gcc-multilib \
+                       g++-multilib \
                        gdb && \
-    ln -s /usr/bin/clangd-11 /usr/bin/clangd && \
-    ln -s /usr/bin/clang-tidy-11 /usr/bin/clang-tidy && \
-    rm -rf /var/lib/apt/lists/*
+    ln -s /usr/bin/clang-$LLVM /usr/bin/clang && \
+    ln -s /usr/bin/clang++-$LLVM /usr/bin/clang++ && \
+    ln -s /usr/bin/clang-cl-$LLVM /usr/bin/clang-cl && \
+    ln -s /usr/bin/clang-cpp-$LLVM /usr/bin/clang-cpp && \
+    ln -s /usr/bin/clang-tidy-$LLVM /usr/bin/clang-tidy && \
+    ln -s /usr/bin/clangd-$LLVM /usr/bin/clangd
 
 # Install latest stable CMake
-RUN wget "https://cmake.org/files/v3.17/cmake-3.17.0-Linux-x86_64.sh" && \
-    chmod a+x cmake-3.17.0-Linux-x86_64.sh && \
-    ./cmake-3.17.0-Linux-x86_64.sh --prefix=/usr/ --skip-license && \
-    rm cmake-3.17.0-Linux-x86_64.sh
+ARG CMAKE_VERSION=3.18.1
+
+
+RUN wget "https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-Linux-x86_64.sh" && \
+    chmod a+x cmake-$CMAKE_VERSION-Linux-x86_64.sh && \
+    ./cmake-$CMAKE_VERSION-Linux-x86_64.sh --prefix=/usr/ --skip-license && \
+    rm cmake-$CMAKE_VERSION-Linux-x86_64.sh
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia
-ADD settings.json /home/theia/.theia/
 
 RUN chmod g+rw /home && \
     mkdir -p /home/project && \
@@ -147,4 +155,3 @@ ENV SHELL=/bin/bash \
     THEIA_DEFAULT_PLUGINS=local-dir:/home/theia/plugins
 
 ENTRYPOINT [ "node", "/home/theia/src-gen/backend/main.js", "/home/project", "--hostname=0.0.0.0" ]
-# ENTRYPOINT [ "yarn", "theia", "start", "/home/project", "--hostname=0.0.0.0" ]
