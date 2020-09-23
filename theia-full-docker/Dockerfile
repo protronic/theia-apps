@@ -91,7 +91,14 @@ RUN set -ex \
 #Developer tools
 
 ## Git and sudo (sudo needed for user override)
-RUN apt-get update && apt-get -y install git sudo
+RUN \
+  apt-get update && \
+  apt-get -y dist-upgrade && \
+  apt-get install -y software-properties-common nano htop && \
+  add-apt-repository universe && \
+  add-apt-repository multiverse && \
+  apt-get update && \
+  apt-get -y install git sudo
 
 #LSPs
 
@@ -138,9 +145,47 @@ RUN go get -u -v -d github.com/stamblerre/gocode && \
 
 ENV PATH=$PATH:$GOPATH/bin
 
+#Java https://github.com/AdoptOpenJDK/openjdk-docker/blob/master/14/jdk/ubuntu/Dockerfile.hotspot.releases.full
+ENV JAVA_VERSION jdk-14.0.2+12
 
-#Java
-RUN apt-get update && apt-get -y install openjdk-11-jdk maven gradle
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+       aarch64|arm64) \
+         ESUM='ee87e9f03b1fbe6f328429b78fe1a9f44900026d220c90dfd747fe0bcd62d904'; \
+         BINARY_URL='https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_aarch64_linux_hotspot_14.0.2_12.tar.gz'; \
+         ;; \
+       armhf|armv7l) \
+         ESUM='65f193496c6977ba7aed1563edc4b5be091b5ff03e3d790074bb4e389a034b36'; \
+         BINARY_URL='https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_arm_linux_hotspot_14.0.2_12.tar.gz'; \
+         ;; \
+       ppc64el|ppc64le) \
+         ESUM='465a3b8e931896b8d95e452d479615c4bf543535c05b6ea246323ae114e67d7d'; \
+         BINARY_URL='https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_ppc64le_linux_hotspot_14.0.2_12.tar.gz'; \
+         ;; \
+       s390x) \
+         ESUM='7d27aea30e359cf0bb561f8dcca6f4591dbc3ae831981f8a19aa367d31a9709b'; \
+         BINARY_URL='https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_s390x_linux_hotspot_14.0.2_12.tar.gz'; \
+         ;; \
+       amd64|x86_64) \
+         ESUM='7d5ee7e06909b8a99c0d029f512f67b092597aa5b0e78c109bd59405bbfa74fe'; \
+         BINARY_URL='https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14.0.2%2B12/OpenJDK14U-jdk_x64_linux_hotspot_14.0.2_12.tar.gz'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    curl -LfsSo /tmp/openjdk.tar.gz ${BINARY_URL}; \
+    echo "${ESUM} */tmp/openjdk.tar.gz" | sha256sum -c -; \
+    mkdir -p /opt/java/openjdk; \
+    cd /opt/java/openjdk; \
+    tar -xf /tmp/openjdk.tar.gz --strip-components=1; \
+    rm -rf /tmp/openjdk.tar.gz;
+
+ENV JAVA_HOME=/opt/java/openjdk \
+    PATH="/opt/java/openjdk/bin:$PATH"
+RUN apt-get update && apt-get -y install maven gradle
 
 
 #C/C++
@@ -259,6 +304,49 @@ RUN \
 ENV DART_SDK /usr/lib/dart
 ENV PATH $DART_SDK/bin:/theia/.pub-cache/bin:$PATH
 
+# Rust
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+
+ENV USER root
+
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y \
+    && rustup update \
+    && rustup component add rls rust-src rust-analysis
+
+# Embedded Rust
+#RUN npm install --global xpm@latest
+#RUN xpm install --global @xpack-dev-tools/arm-none-eabi-gcc@latest
+ENV ARM_TOOLS_VERSION 9.2.1-1.1
+
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+       amd64|x86_64) \
+         ESUM='bbde117b97f229dfe63721c0323c3da6839e83cf302c8f4ff25e0f36ecf7a428'; \
+         BINARY_URL='https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v9.2.1-1.1/xpack-arm-none-eabi-gcc-9.2.1-1.1-linux-x64.tar.gz'; \
+         ;; \
+       *) \
+         echo "Unsupported arch: ${ARCH}"; \
+         exit 1; \
+         ;; \
+    esac; \
+    curl -LfsSo /tmp/arm-none-eabi-gcc.tar.gz ${BINARY_URL}; \
+    echo "${ESUM} */tmp/arm-none-eabi-gcc.tar.gz" | sha256sum -c -; \
+    mkdir -p /opt/arm-none-eabi-gcc; \
+    cd /opt/arm-none-eabi-gcc; \
+    tar -xf /tmp/arm-none-eabi-gcc.tar.gz --strip-components=1; \
+    rm -rf /tmp/arm-none-eabi-gcc.tar.gz;
+
+ENV PATH="/opt/arm-none-eabi-gcc/bin:$PATH"
+RUN apt-get -y install pkg-config openssl libssl-dev gdb
+RUN cargo install cargo-generate
+RUN cargo install cargo-clone
+RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi thumbv7em-none-eabihf
+
+# Angular
+RUN npm install -g @angular/cli
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia && \
