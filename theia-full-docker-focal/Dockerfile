@@ -94,7 +94,7 @@ RUN set -ex \
 RUN \
   apt-get update && \
   apt-get -y dist-upgrade && \
-  apt-get install -y software-properties-common && \
+  apt-get install -y software-properties-common nano htop && \
   add-apt-repository universe && \
   add-apt-repository multiverse && \
   apt-get update && \
