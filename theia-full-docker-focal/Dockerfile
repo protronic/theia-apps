@@ -193,7 +193,7 @@ RUN apt-get update && apt-get -y install maven gradle
 ARG LLVM=12
 
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
-    echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" > /etc/apt/sources.list.d/llvm.list && \
+    echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal main" > /etc/apt/sources.list.d/llvm.list && \
     apt-get update && \
     apt-get install -y \
                        clang-tools-$LLVM \
@@ -221,11 +221,13 @@ RUN wget "https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cma
 #Python 2-3
 RUN apt-get update \
     && apt-get install -y software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt-get install -y python-dev python-pip \
+    && add-apt-repository universe \
+    && apt-get install -y python2 python2-dev \
+    && curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py \
+    && python2 get-pip.py \
     && apt-get install -y python3.8 python3-dev python3-pip \
     && apt-get remove -y software-properties-common \
-    && python -m pip install --upgrade pip --user \
+    && python2 -m pip install --upgrade pip --user \
     && python3.8 -m pip install --upgrade pip --user \
     && pip3 install python-language-server flake8 autopep8
 
@@ -237,7 +239,7 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 # suppresses .NET welcome message
 ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE 1
 
-RUN curl -SLO "https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb" \
+RUN curl -SLO "https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb" \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
@@ -266,12 +268,12 @@ RUN apt-get update && apt-get -y install ruby ruby-dev zlib1g-dev && \
 
 
 #Swift
-ARG SWIFT_VERSION=5.2.4
+ARG SWIFT_VERSION=5.3
 
 RUN apt-get update \
-    && apt-get install -y binutils libc6-dev libcurl4 libedit2 libgcc-5-dev libpython2.7 libsqlite3-0 libstdc++-5-dev libxml2 pkg-config tzdata zlib1g-dev \
-    && curl -SLO https://swift.org/builds/swift-$SWIFT_VERSION-release/ubuntu1804/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz \
-    && curl -SLO https://swift.org/builds/swift-$SWIFT_VERSION-release/ubuntu1804/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz.sig \
+    && apt-get install -y binutils libc6-dev libcurl4 libedit2 libgcc-7-dev libpython2.7 libsqlite3-0 libstdc++-7-dev libxml2 pkg-config tzdata zlib1g-dev \
+    && curl -SLO https://swift.org/builds/swift-$SWIFT_VERSION-release/ubuntu2004/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-ubuntu20.04.tar.gz \
+    && curl -SLO https://swift.org/builds/swift-$SWIFT_VERSION-release/ubuntu2004/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-ubuntu20.04.tar.gz.sig \
     && wget -q -O - https://swift.org/keys/all-keys.asc | gpg --import - \
     && (    gpg --keyserver pool.sks-keyservers.net --refresh-keys Swift \
          || gpg --keyserver ipv4.pool.sks-keyservers.net --refresh-keys Swift \
@@ -280,10 +282,10 @@ RUN apt-get update \
          || gpg --keyserver keyserver.pgp.com --refresh-keys Swift \
          || gpg --keyserver ha.pool.sks-keyservers.net --refresh-keys Swift \
        ) \
-    && gpg --verify swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz.sig \
-    && tar fxz swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz \
-    && rm swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz swift-$SWIFT_VERSION-RELEASE-ubuntu18.04.tar.gz.sig \
-    && mv swift-$SWIFT_VERSION-RELEASE-ubuntu18.04 /usr/local/swift \
+    && gpg --verify swift-$SWIFT_VERSION-RELEASE-ubuntu20.04.tar.gz.sig \
+    && tar fxz swift-$SWIFT_VERSION-RELEASE-ubuntu20.04.tar.gz \
+    && rm swift-$SWIFT_VERSION-RELEASE-ubuntu20.04.tar.gz swift-$SWIFT_VERSION-RELEASE-ubuntu20.04.tar.gz.sig \
+    && mv swift-$SWIFT_VERSION-RELEASE-ubuntu20.04 /usr/local/swift \
     && ln -s /usr/local/swift/usr/bin/swift* /usr/bin \
     && ln -s /usr/local/swift/usr/bin/lldb* /usr/bin \
     && ln -s /usr/local/swift/usr/bin/sourcekit-lsp /usr/bin
@@ -324,8 +326,8 @@ RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        amd64|x86_64) \
-         ESUM='bbde117b97f229dfe63721c0323c3da6839e83cf302c8f4ff25e0f36ecf7a428'; \
-         BINARY_URL='https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v9.2.1-1.1/xpack-arm-none-eabi-gcc-9.2.1-1.1-linux-x64.tar.gz'; \
+         ESUM='ada5b1e4d4fd6f6ffe80c398188eab5d2fc43639cb219fe212576f4bc2ebe35a'; \
+         BINARY_URL='https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v9.3.1-1.2/xpack-arm-none-eabi-gcc-9.3.1-1.2-linux-x64.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
