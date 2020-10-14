@@ -94,7 +94,7 @@ RUN set -ex \
 RUN \
   apt-get update && \
   apt-get -y dist-upgrade && \
-  apt-get install -y software-properties-common nano htop && \
+  apt-get install -y software-properties-common nano htop expect && \
   add-apt-repository universe && \
   add-apt-repository multiverse && \
   apt-get update && \
@@ -348,7 +348,7 @@ RUN cargo install cargo-clone
 RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi thumbv7em-none-eabihf
 
 # Angular
-RUN npm install -g @angular/cli
+RUN npm install -g @angular/cli http-server
 
 ## User account
 RUN adduser --disabled-password --gecos '' theia && \
@@ -409,5 +409,9 @@ ENV SHELL=/bin/bash \
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
+
+# git globals
+RUN git config --global user.name "protronic" && \
+    git config --global user.email "webmaster@protronic-gmbh.de"
 
 ENTRYPOINT [ "node", "/home/theia/src-gen/backend/main.js", "/home/project", "--hostname=0.0.0.0" ]
