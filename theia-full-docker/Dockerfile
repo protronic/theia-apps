@@ -97,7 +97,6 @@ ARG GITHUB_TOKEN
 # Use "latest" or "next" version for Theia packages
 ARG version=latest
 
-<<<<<<< HEAD
 ## Git and sudo (sudo needed for user override)
 RUN \
   apt-get update && \
@@ -107,12 +106,10 @@ RUN \
   add-apt-repository multiverse && \
   apt-get update && \
   apt-get -y install git sudo
-=======
 # Optionally build a striped Theia application with no map file or .ts sources.
 # Makes image ~150MB smaller when enabled
 ARG strip=false
 ENV strip=$strip
->>>>>>> upstream/master
 
 USER theia
 WORKDIR /home/theia
@@ -183,7 +180,6 @@ RUN go get -u -v -d github.com/stamblerre/gocode && \
 
 ENV PATH=$PATH:$GOPATH/bin
 
-<<<<<<< HEAD
 #Java https://github.com/AdoptOpenJDK/openjdk-docker/blob/master/14/jdk/ubuntu/Dockerfile.hotspot.releases.full
 ENV JAVA_VERSION jdk-14.0.2+12
 
@@ -225,10 +221,6 @@ RUN set -eux; \
 ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"
 RUN apt-get update && apt-get -y install maven gradle
-=======
-# Java
-RUN apt-get update && apt-get -y install openjdk-11-jdk maven gradle
->>>>>>> upstream/master
 
 # C/C++
 # public LLVM PPA, development version of LLVM
@@ -340,7 +332,6 @@ RUN \
 ENV DART_SDK /usr/lib/dart
 ENV PATH $DART_SDK/bin:/theia/.pub-cache/bin:$PATH
 
-<<<<<<< HEAD
 # Rust
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -384,9 +375,6 @@ RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi 
 
 # Angular
 RUN npm install -g @angular/cli
-=======
-WORKDIR /home/theia
->>>>>>> upstream/master
 
 COPY --from=theia --chown=theia:theia /home/theia /home/theia
 
