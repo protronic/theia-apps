@@ -347,6 +347,9 @@ RUN cargo install cargo-generate
 RUN cargo install cargo-clone
 RUN rustup target add thumbv6m-none-eabi thumbv7m-none-eabi thumbv7em-none-eabi thumbv7em-none-eabihf
 
+# PlatformIO
+RUN python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+
 # Angular
 RUN npm install -g @angular/cli http-server
 
