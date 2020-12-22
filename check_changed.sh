@@ -1,37 +1,25 @@
 #!/bin/bash
 set -e
-# This script is called by Travis during the install step.
-# It returns 1 if no files where changed. In that case
+# This script is called by GH Workflows before the install step.
+# It echoes 137 if no files where changed. In that case
 # no further building/test is required for this image
 
 IMAGE_NAME=$1
 
-echo "Travis event type: $TRAVIS_EVENT_TYPE"
-
-if [ "$TRAVIS_EVENT_TYPE" != "pull_request" ]
-then
-    # trigger via travis dashboard or cron job
-    # test all
-    echo "Trigger all tests"
-    exit 0
-fi
-
-
-CHANGED_FILES=$(git diff --name-status HEAD~1...HEAD "$IMAGE_NAME-docker")
-
+CHANGED_FILES=$(git diff --name-status origin/master "$IMAGE_NAME-docker")
 
 if [ "$IMAGE_NAME" == "theia" ]
 then
     if [ -z "$CHANGED_FILES" ]
     then
         # there were no changes in theia-docker
-        
+
         # we want to build the theia-docker image also
         # in the case that there were changes in other
         # non theia*-docker folders
         # eg. build scripts
-    
-        CHANGED_FILES_NON_DOCKER=$(git diff --name-status HEAD~1...HEAD .)
+
+        CHANGED_FILES_NON_DOCKER=$(git diff --name-status origin/master .)
         while read -r line; do
             # the output of the git diff is of the form "M    theia-somename-docker/xyz"
             if [[ $line =~ ^[[:space:]]*.[[:space:]]+theia(.)*-docker(.)+ ]]; then
@@ -52,11 +40,8 @@ fi
 if [ -z "$CHANGED_FILES" ]
 then
     # nothing changed, skip building
-    echo "No changes in $IMAGE_NAME, terminate"
-   
     # this indicates to the parent script that the build can be terminated
-    exit 137
+    echo 137
+else
+    echo 0
 fi
-
-echo "There were changes in $IMAGE_NAME changes: $CHANGED_FILES"
-exit 0

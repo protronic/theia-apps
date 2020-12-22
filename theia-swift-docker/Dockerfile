@@ -4,7 +4,7 @@ RUN npm install -g vsce
 RUN git clone --depth 1 https://github.com/apple/sourcekit-lsp
 WORKDIR /sourcekit-lsp/Editors/vscode
 RUN npm install
-RUN npm run postinstall
+RUN npm run vscode:prepublish
 RUN vsce package -o ./sourcekit-lsp.vsix
 
 
@@ -26,7 +26,8 @@ RUN yarn --pure-lockfile && \
     yarn cache clean
 
 
-FROM satishbabariya/sourcekit-lsp
+FROM swift
+
 ENV DEBIAN_FRONTEND noninteractive
 ARG NODE_VERSION=12
 ENV NODE_VERSION $NODE_VERSION
