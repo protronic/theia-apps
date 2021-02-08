@@ -7,15 +7,7 @@ ARG NODE_VERSION=12.18.3
 ENV NODE_VERSION $NODE_VERSION
 ENV YARN_VERSION 1.13.0
 
-# use "latest" or "next" version for Theia packages
-ARG version=latest
-
-# Optionally build a striped Theia application with no map file or .ts sources.
-# Makes image ~150MB smaller when enabled
-ARG strip=false
-ENV strip=$strip
-
-#Common deps
+# Common deps
 RUN apt-get update && \
     apt-get -y install build-essential \
                        curl \
@@ -23,10 +15,22 @@ RUN apt-get update && \
                        gpg \
                        python \
                        wget \
-                       xz-utils
+                       xz-utils \
+                       sudo \
+    && \
+    apt-get clean && \
+    apt-get autoremove -y && \
+    rm -rf /var/cache/apt/* && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/*
 
-#Install node and yarn
-#From: https://github.com/nodejs/docker-node/blob/6b8d86d6ad59e0d1e7a94cec2e909cad137a028f/8/Dockerfile
+## User account
+RUN adduser --disabled-password --gecos '' theia && \
+    adduser theia sudo && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Install node and yarn
+# From: https://github.com/nodejs/docker-node/blob/6b8d86d6ad59e0d1e7a94cec2e909cad137a028f/8/Dockerfile
 
 # gpg keys listed at https://github.com/nodejs/node#release-keys
 RUN set -ex \
@@ -68,7 +72,6 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
-
 RUN set -ex \
     && for key in \
     6A010C5166006599AA17F08146C2130DFD2497F5 \
@@ -88,21 +91,54 @@ RUN set -ex \
     && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg \
     && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
 
-#Developer tools
+FROM common as theia
+
+ARG GITHUB_TOKEN
+
+# Use "latest" or "next" version for Theia packages
+ARG version=latest
 
 ## Git and sudo (sudo needed for user override)
 RUN \
   apt-get update && \
   apt-get -y dist-upgrade && \
-  apt-get install -y software-properties-common nano htop expect && \
+  apt-get install -y software-properties-common nano htop && \
   add-apt-repository universe && \
   add-apt-repository multiverse && \
   apt-get update && \
   apt-get -y install git sudo
+# Optionally build a striped Theia application with no map file or .ts sources.
+# Makes image ~150MB smaller when enabled
+ARG strip=false
+ENV strip=$strip
 
-#LSPs
+USER theia
+WORKDIR /home/theia
+ADD $version.package.json ./package.json
 
-##GO
+RUN if [ "$strip" = "true" ]; then \
+yarn --pure-lockfile && \
+    NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
+    yarn theia download:plugins && \
+    yarn --production && \
+    yarn autoclean --init && \
+    echo *.ts >> .yarnclean && \
+    echo *.ts.map >> .yarnclean && \
+    echo *.spec.* >> .yarnclean && \
+    yarn autoclean --force && \
+    yarn cache clean \
+;else \
+yarn --cache-folder ./ycache && rm -rf ./ycache && \
+     NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && yarn theia download:plugins \
+;fi
+
+FROM common
+
+# Developer tools
+
+# LSPs
+
+## GO
 ENV GO_VERSION=1.15 \
     GOOS=linux \
     GOARCH=amd64 \
@@ -110,10 +146,10 @@ ENV GO_VERSION=1.15 \
     GOPATH=/usr/local/go-packages
 ENV PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
-# install Go
+# Install Go
 RUN curl -fsSL https://storage.googleapis.com/golang/go$GO_VERSION.$GOOS-$GOARCH.tar.gz | tar -C /usr/local -xzv
 
-# install VS Code Go tools: https://github.com/Microsoft/vscode-go/blob/058eccf17f1b0eebd607581591828531d768b98e/src/goInstallTools.ts#L19-L45
+# Install VS Code Go tools: https://github.com/Microsoft/vscode-go/blob/058eccf17f1b0eebd607581591828531d768b98e/src/goInstallTools.ts#L19-L45
 RUN go get -u -v github.com/mdempsky/gocode && \
     go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs && \
     go get -u -v github.com/ramya-rao-a/go-outline && \
@@ -187,10 +223,9 @@ ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"
 RUN apt-get update && apt-get -y install maven gradle
 
-
-#C/C++
+# C/C++
 # public LLVM PPA, development version of LLVM
-ARG LLVM=12
+ARG LLVM=13
 
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
     echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal main" > /etc/apt/sources.list.d/llvm.list && \
@@ -217,8 +252,7 @@ RUN wget "https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cma
     ./cmake-$CMAKE_VERSION-Linux-x86_64.sh --prefix=/usr/ --skip-license && \
     rm cmake-$CMAKE_VERSION-Linux-x86_64.sh
 
-
-#Python 2-3
+# Python 2-3
 RUN apt-get update \
     && apt-get install -y software-properties-common \
     && add-apt-repository universe \
@@ -231,12 +265,11 @@ RUN apt-get update \
     && python3.8 -m pip install --upgrade pip --user \
     && pip3 install python-language-server flake8 autopep8
 
-
-#.NET Core SDK
+# .NET Core SDK
 ARG DOTNET_VERSION=3.1
-# disables .NET telemetry
+# Disables .NET telemetry
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
-# suppresses .NET welcome message
+# Suppresses .NET welcome message
 ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE 1
 
 RUN curl -SLO "https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb" \
@@ -245,8 +278,7 @@ RUN curl -SLO "https://packages.microsoft.com/config/ubuntu/20.04/packages-micro
     && apt-get update \
     && apt-get install -y dotnet-sdk-$DOTNET_VERSION
 
-
-#PHP
+# PHP
 ARG PHP_VERSION=7.4
 
 RUN apt-get update \
@@ -261,13 +293,11 @@ RUN curl -s -o composer-setup.php https://getcomposer.org/installer \
     && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
     && rm composer-setup.php
 
-
-#Ruby
+# Ruby
 RUN apt-get update && apt-get -y install ruby ruby-dev zlib1g-dev && \
     gem install solargraph
 
-
-#Swift
+# Swift
 ARG SWIFT_VERSION=5.3
 
 RUN apt-get update \
@@ -290,8 +320,7 @@ RUN apt-get update \
     && ln -s /usr/local/swift/usr/bin/lldb* /usr/bin \
     && ln -s /usr/local/swift/usr/bin/sourcekit-lsp /usr/bin
 
-
-#Dart
+# Dart
 ENV DART_VERSION 2.9.0
 
 RUN \
@@ -353,10 +382,7 @@ RUN python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platfo
 # Angular
 RUN npm install -g @angular/cli http-server
 
-## User account
-RUN adduser --disabled-password --gecos '' theia && \
-    adduser theia sudo && \
-    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+COPY --from=theia --chown=theia:theia /home/theia /home/theia
 
 RUN chmod g+rw /home && \
     mkdir -p /home/project && \
@@ -364,57 +390,32 @@ RUN chmod g+rw /home && \
     mkdir -p /usr/local/cargo && \
     mkdir -p /usr/local/go && \
     mkdir -p /usr/local/go-packages && \
-    chown -R theia:theia /home/theia && \
     chown -R theia:theia /home/project && \
+    chown -R theia:theia /home/theia/.pub-cache/bin && \
     chown -R theia:theia /usr/local/cargo && \
     chown -R theia:theia /usr/local/go && \
     chown -R theia:theia /usr/local/go-packages
 
-
 # Theia application
-##Needed for node-gyp, nsfw build
-RUN apt-get update && apt-get install -y python build-essential && \
-  apt-get clean && \
+## Needed for node-gyp, nsfw build
+RUN apt-get clean && \
   apt-get autoremove -y && \
   rm -rf /var/cache/apt/* && \
   rm -rf /var/lib/apt/lists/* && \
   rm -rf /tmp/*
 
-USER theia
-WORKDIR /home/theia
-ADD $version.package.json ./package.json
-
-RUN if [ "$strip" = "true" ]; then \
-yarn --pure-lockfile && \
-    NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
-    yarn theia download:plugins && \
-    yarn --production && \
-    yarn autoclean --init && \
-    echo *.ts >> .yarnclean && \
-    echo *.ts.map >> .yarnclean && \
-    echo *.spec.* >> .yarnclean && \
-    yarn autoclean --force && \
-    yarn cache clean \
-;else \
-yarn --cache-folder ./ycache && rm -rf ./ycache && \
-     NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && yarn theia download:plugins \
-;fi
-
 # Change permissions to make the `yang-language-server` executable.
 RUN chmod +x ./plugins/yangster/extension/server/bin/yang-language-server
 
+USER theia
 EXPOSE 3000
-# configure Theia
+# Configure Theia
 ENV SHELL=/bin/bash \
     THEIA_DEFAULT_PLUGINS=local-dir:/home/theia/plugins  \
-    # configure user Go path
+    # Configure user Go path
     GOPATH=/home/project
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
-
-# git globals
-RUN git config --global user.name "protronic" && \
-    git config --global user.email "webmaster@protronic-gmbh.de"
 
 ENTRYPOINT [ "node", "/home/theia/src-gen/backend/main.js", "/home/project", "--hostname=0.0.0.0" ]
