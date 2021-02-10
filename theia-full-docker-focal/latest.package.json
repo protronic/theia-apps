@@ -140,7 +140,7 @@
         "plantuml": "https://open-vsx.org/api/jebbs/plantuml/2.14.0/file/jebbs.plantuml-2.14.0.vsix",
         "yangster": "https://open-vsx.org/api/typefox/yang-vscode/2.0.3/file/typefox.yang-vscode-2.0.3.vsix",
         "vscode-maven": "https://open-vsx.org/api/vscjava/vscode-maven/0.21.2/file/vscjava.vscode-maven-0.21.2.vsix",
-        "vscode-spring-boot": "https://open-vsx.org/api/Pivotal/vscode-spring-boot/1.22.0/file/Pivotal.vscode-spring-boot-1.22.0.vsix",
+        "vscode-spring-boot": "https://github.com/spring-projects/sts4/releases/download/4.9.0.RELEASE/vscode-spring-boot-1.24.0-RC.1.vsix",
         "debugger-for-chrome": "https://open-vsx.org/api/msjsdiag/debugger-for-chrome/4.12.6/file/msjsdiag.debugger-for-chrome-4.12.6.vsix",
         "vscode-firefox-debug": "https://open-vsx.org/api/firefox-devtools/vscode-firefox-debug/2.9.1/file/firefox-devtools.vscode-firefox-debug-2.9.1.vsix",
         "ng-template": "https://github.com/angular/vscode-ng-language-service/releases/download/v0.1001.0/ngls.vsix",

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as common
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -257,12 +257,12 @@ RUN apt-get update \
     && apt-get install -y software-properties-common \
     && add-apt-repository universe \
     && apt-get install -y python2 python2-dev \
-    && curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py \
+    && curl https://bootstrap.pypa.io/2.7/get-pip.py --output get-pip.py \
     && python2 get-pip.py \
-    && apt-get install -y python3.8 python3-dev python3-pip \
+    && apt-get install -y python3.9 python3-dev python3-pip \
     && apt-get remove -y software-properties-common \
     && python2 -m pip install --upgrade pip --user \
-    && python3.8 -m pip install --upgrade pip --user \
+    && python3.9 -m pip install --upgrade pip --user \
     && pip3 install python-language-server flake8 autopep8
 
 # .NET Core SDK
@@ -381,6 +381,8 @@ RUN python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platfo
 
 # Angular
 RUN npm install -g @angular/cli http-server
+
+WORKDIR /home/theia
 
 COPY --from=theia --chown=theia:theia /home/theia /home/theia
 
